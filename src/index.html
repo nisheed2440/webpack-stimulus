@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+
+<body>
+    <div class="section" data-controller="test">
+        <div class="container">
+            <div class="columns">
+                <div class="column">
+                    <form action="">
+                        <div class="field">
+                            <label class="label">Message</label>
+                            <div class="control">
+                                <textarea class="textarea" placeholder="Textarea" data-target="test.title"></textarea>
+                            </div>
+                        </div>
+                        <div class="field is-grouped">
+                            <div class="control">
+                                <button class="button is-link" data-action="click->test#greet">Submit</button>
+                            </div>
+                            <div class="control">
+                                <button class="button" data-action="click->test#cancel">Cancel</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="column">
+                    <div class="notification is is-hidden" data-target="test.notification">
+                        <button class="delete" data-action="click->test#cancel"></button>
+                        <h3 class="subtitle" data-target="test.output"></h3>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./polyfills.js"></script>
+    <script src="./vendor.js"></script>
+    <script src="./app.js"></script>
+    <script src="./components/test/lib/test.js" async defer></script>
+</body>
+
+</html>

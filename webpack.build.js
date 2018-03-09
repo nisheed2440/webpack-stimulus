@@ -12,7 +12,10 @@ async function build() {
     const componentConfigs = await utils.createComponentConfigs(__dirname);
     // Get the App config
 
-    [...componentConfigs].forEach(config => {
+    // Get the Vendor configs
+    const appConfig = await utils.createAppConfigs(__dirname);
+
+    [...componentConfigs, ...appConfig].forEach(config => {
         webpackConfigs.push(utils.createWebpackInstance(config.webpack, config));
     });
     // Clean up the dist folder

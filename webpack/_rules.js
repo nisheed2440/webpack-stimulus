@@ -34,7 +34,14 @@ function getComponentWebpackRules({
         })
     }];
 }
+/**
+ * Function to get all the webpack configuration rules for vendor files
+ */
+function getVendorWebpackRules(pluginsObj) {
+    return getComponentWebpackRules(pluginsObj);
+}
 
 module.exports = {
-    getComponentWebpackRules
+    getComponentWebpackRules,
+    getVendorWebpackRules
 };
