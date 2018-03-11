@@ -141,7 +141,7 @@ function createComponentConfigs(root) {
         const configs = [];
         const {stimulus, app} = require('./_externals');
         
-        glob('./src/components/**/*.js', (err, files) => {
+        glob('./src/app/components/**/*.js', (err, files) => {
             if (err) {
                 reject(err);
             }
@@ -163,7 +163,7 @@ function createComponentConfigs(root) {
                         entry: file,
                         output: {
                             filename: componentFile,
-                            path: path.resolve(root, 'dist', 'components', componentName, 'lib'),
+                            path: path.resolve(root, 'dist', 'components', 'components', componentName, 'lib'),
                             library: ['DNG', componentCtrl],
                             libraryTarget: 'umd'
                         },
@@ -215,7 +215,7 @@ function createVendorConfigs(root) {
                 devtool: 'false'
             }
         };
-        resolve(createVendorConfigs);
+        resolve([createVendorConfigs]);
     });
 }
 /**
@@ -223,10 +223,10 @@ function createVendorConfigs(root) {
  * @param {String} root The directory root of the application
  */
 function createAppConfigs(root) {
-    return createVendorConfigs(root).then(vendorConfigs => {
+    return new Promise((resolve) => {
         const {stimulus} = require('./_externals');
         const appConfig = {
-            webpack: Object.assign({}, vendorConfigs.webpack, {
+            webpack: {
                 entry: {
                     'app': path.resolve(root, 'src/app.js')
                 },
@@ -236,12 +236,16 @@ function createAppConfigs(root) {
                     library: ['DNG', 'App'],
                     libraryTarget: 'umd'
                 },
+                module: {
+                    rules: rules.getVendorWebpackRules(pluginsObj)
+                },
+                plugins: plugins.getAppWebpackPlugins(pluginsObj),
                 externals: [
                     {stimulus}
                 ],
-            })
+            }
         };
-        return [vendorConfigs, appConfig];
+        resolve([appConfig]);
     });
 }
 

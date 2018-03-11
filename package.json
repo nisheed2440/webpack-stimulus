@@ -43,6 +43,8 @@
     "yargs": "^11.0.0"
   },
   "dependencies": {
+    "@frctl/fractal": "^1.1.7",
+    "@frctl/handlebars": "^1.1.4",
     "stimulus": "^1.0.1"
   }
 }
