@@ -1,12 +1,24 @@
-const utils = require('./webpack/_utils');
-const chalk = require('chalk');
-const path = require('path');
-
+/**
+ * All global objects used for the build and deployment
+ */
 // A partials object that would be written to a file.
 global.PARTIALS_OBJ = {};
 global.FTL = null;
 global.FTL_LOGGER = null;
 global.FTL_SERVER = null;
+global.FTL_FIRST_RUN = true;
+global.FTL_WATCH = false;
+global.FTL_BUILD = false;
+global.FTL_PROD = false;
+global.FTL_SOURCEMAP = false;
+
+/**
+ * Utility Imports
+ */
+const utils = require('./webpack/_utils');
+const chalk = require('chalk');
+const path = require('path');
+
 
 /**
  * Function to require uncached module/file 
@@ -33,11 +45,13 @@ async function build() {
         webpackConfigs.push(utils.createWebpackInstance(config.webpack, config));
     });
     // Clean up the dist folder
-    await utils.cleanUp(['./dist']);
+    await utils.cleanUp(['./dist', './build']);
     // Build all the webpack configs
     await Promise.all(webpackConfigs).then(() => {
         // Write partials file for the fractal build
         return utils.writePartialsFile(global.PARTIALS_OBJ).then(() => {
+            // Check whether the current task is running for the first time
+            global.FTL_FIRST_RUN = false;
             return fractalStart();
         });
     });
@@ -57,7 +71,7 @@ function fractalStart() {
     const fractal = module.exports = require('@frctl/fractal').create();
     /** Fractal theme overrides for fractulus */
     const mandelbrot = require('@frctl/mandelbrot')({
-        favicon: '/fractulus/assets/favicon.ico',
+        favicon: '/assets/icons/favicon.ico',
         nav: ['docs', 'components'],
         lang: 'en-US',
         styles: ['default'],
@@ -125,10 +139,30 @@ function fractalStart() {
         global.FTL.docs.engine(hbs); /* you can also use the same instance for documentation, if you like! */
     };
 
+    if(global.FTL_BUILD) {
+        return createFractalDeployable();
+    }
+
     return createFractalServer();
 }
+/**
+ * Function to create deployable fractal codebase
+ */
+function createFractalDeployable() {
+    global.updateFractalEngine();
+    const builder = global.FTL.web.builder();
 
-// Create fractal server instance
+    builder.on('progress', (completed, total) =>  global.FTL_LOGGER.update(`Exported ${completed} of ${total} items`, 'info'));
+    builder.on('error', err =>  global.FTL_LOGGER.error(err.message));
+    return builder.build().then(() => {
+         global.FTL_LOGGER.success('Fractal build completed!');
+         return utils.cleanUp(['./dist']);
+    });
+}
+
+/** 
+ * Function to create fractal server instance
+*/
 function createFractalServer() {
     // Update partials and helpers in the hbs engine
     global.updateFractalEngine();

@@ -1,35 +1,51 @@
-const webpack = require('webpack');
 /**
  * Function to get all the webpack configuration plugins for a component
  */
 function getComponentWebpackPlugins({
     ExtractTextPlugin,
-    CopyWebpackPlugin
+    CopyWebpackPlugin,
+    UglifyJsPlugin
 }, {
     componentName,
     dirname
 }) {
-    return [
+    const componentPlugins = [
         new ExtractTextPlugin(`${componentName}.css`),
         new CopyWebpackPlugin([{
             from: `${dirname}`,
             to: `../`
-        }]),
-        new webpack.DefinePlugin({
-            'app': 'DNG.App'
-        })
+        }])
     ];
+    if (global.FTL_PROD === true) {
+        componentPlugins.push(
+            new UglifyJsPlugin({
+                parallel: true,
+                sourceMap: global.FTL_SOURCEMAP
+            })
+        );
+    }
+    return componentPlugins;
 }
 
 /**
  * Function to get all the webpack configuration plugins for vendor files
  */
 function getVendorWebpackPlugins({
-    ExtractTextPlugin
+    ExtractTextPlugin,
+    UglifyJsPlugin
 }) {
-    return [
+    const vendorPlugins = [
         new ExtractTextPlugin(`[name].css`)
     ];
+    if (global.FTL_PROD === true) {
+        vendorPlugins.push(
+            new UglifyJsPlugin({
+                parallel: true,
+                sourceMap: global.FTL_SOURCEMAP
+            })
+        );
+    }
+    return vendorPlugins;
 }
 
 /**
@@ -37,9 +53,10 @@ function getVendorWebpackPlugins({
  */
 function getAppWebpackPlugins({
     ExtractTextPlugin,
-    CopyWebpackPlugin
+    CopyWebpackPlugin,
+    UglifyJsPlugin
 }) {
-    return [
+    const appPlugins = [
         new ExtractTextPlugin(`[name].css`),
         new CopyWebpackPlugin([{
             from: `src/docs`,
@@ -50,11 +67,20 @@ function getAppWebpackPlugins({
         }, {
             from: `src/app/pages`,
             to: `./components/pages`
-        },{
+        }, {
             from: `src/_fractal/_preview-templates`,
             to: `./components/_preview-templates`
         }])
     ];
+    if (global.FTL_PROD === true) {
+        appPlugins.push(
+            new UglifyJsPlugin({
+                parallel: true,
+                sourceMap: global.FTL_SOURCEMAP
+            })
+        );
+    }
+    return appPlugins;
 }
 
 module.exports = {

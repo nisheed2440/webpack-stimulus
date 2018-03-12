@@ -4,18 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link rel="shortcut icon" href="{{path '/fractulus/assets/favicon.ico'}}" type="image/ico">
+    <link rel="shortcut icon" href="{{path '/assets/icons/favicon.ico'}}" type="image/ico">
     <title>{{ _target.title }} | {{ _config.project.title }}</title>
     {{!-- Output the application CSS --}}
-    <link rel="stylesheet" href="{{path '/styles/app.css'}}">
-    <link rel="stylesheet" href="{{path '/styles/components.css'}}">
-    <script src="{{path '/fractulus/scripts/polyfill.js'}}"></script>    
+    <link rel="stylesheet" href="{{path '/app.css'}}">
+    <link rel="stylesheet" href="{{path '/components.css'}}">
 </head>
 <body>
     {{{yield}}}
-    <script src="https://unpkg.com/stimulus/dist/stimulus.umd.js"></script>
+   {{!-- Output the polyfill JS --}}
+    <script src="{{path '/polyfills.js'}}"></script>
+    {{!-- Output the vendor JS --}}
+    <script src="{{path '/vendor.js'}}"></script>
     {{!-- Output the application JS --}}
-    <script src="{{path '/scripts/app.js'}}"></script>
-    <script src="{{path '/scripts/components.js'}}"></script>
+    <script src="{{path '/app.js'}}"></script>
+    {{!-- Output the component JS --}}
+    <script src="{{path '/components.js'}}"></script>
 </body>
 </html>

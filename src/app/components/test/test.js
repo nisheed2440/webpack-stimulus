@@ -6,6 +6,7 @@ class Test extends Controller {
   static targets = [ 'title', 'output', 'notification'];
   connect() {
     this.notificationTarget.classList.add('is-hidden');
+    console.log('here!');
   }
 
   greet(e) {

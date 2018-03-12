@@ -1,3 +1,4 @@
+require('./_cli');
 const webpack = require('webpack');
 const glob = require('glob');
 const path = require('path');
@@ -5,20 +6,22 @@ const fs = require('fs');
 const _ = require('lodash');
 const minify = require('html-minifier').minify;
 const beautify = require('js-beautify').js_beautify;
-const rules = require('./_rules');
-const plugins = require('./_plugins');
 const Table = require('cli-table');
 const del = require('del');
+const rules = require('./_rules');
+const plugins = require('./_plugins');
 
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const UglifyJsPlugin = webpack.optimize.UglifyJsPlugin;
 
 // Object to pass the instances of the plugins.
 const pluginsObj = {
     ExtractTextPlugin,
     CleanWebpackPlugin,
-    CopyWebpackPlugin
+    CopyWebpackPlugin,
+    UglifyJsPlugin
 };
 /**
  * Functiont to output the component information gathered in tabular format
@@ -102,7 +105,7 @@ function writePartialsFile(partailsObj) {
 function createWebpackInstance(config, options) {
     return new Promise((resolve, reject) => {
         const compiler = webpack(config);
-        compiler.run((err, stats) => {
+        const compilerCb = async (err, stats) => {
             if (err) {
                 console.error(err.stack || err);
                 if (err.details) {
@@ -121,14 +124,26 @@ function createWebpackInstance(config, options) {
             if (stats.hasWarnings()) {
                 console.warn(info.warnings.toString());
             }
-
+            // Run other tasks like creation of files per component etc.
+            if (options && options.hasOwnProperty('component')) {
+                //  Get the partials belonging to the components and add it to the global partials object
+                await getComponentPartials(options);
+                if(!global.FTL_FIRST_RUN){
+                    await writePartialsFile(global.PARTIALS_OBJ).then(() => {
+                        // Trigger re-build fractal partials and helpers
+                        if(global.FTL_SERVER){
+                            global.updateFractalEngine();
+                            global.FTL_SERVER.emit('source:changed');
+                        }
+                    });
+                }
+            }
             resolve(stats);
-        });
-    }).then(() => {
-        // Run other tasks like creation of files per component etc.
-        if (options && options.hasOwnProperty('component')) {
-            //  Get the partials belonging to the components and add it to the global partials object
-            return getComponentPartials(options);
+        };
+        if(global.FTL_WATCH) {
+            compiler.watch({}, compilerCb);
+        } else {
+            compiler.run(compilerCb);
         }
     });
 }
@@ -139,8 +154,11 @@ function createWebpackInstance(config, options) {
 function createComponentConfigs(root) {
     return new Promise(function (resolve, reject) {
         const configs = [];
-        const {stimulus, app} = require('./_externals');
-        
+        const {
+            stimulus,
+            app
+        } = require('./_externals');
+
         glob('./src/app/components/**/*.js', (err, files) => {
             if (err) {
                 reject(err);
@@ -160,6 +178,7 @@ function createComponentConfigs(root) {
                     component,
                     dirname,
                     webpack: {
+                        devtool: global.FTL_SOURCEMAP && 'source-map',
                         entry: file,
                         output: {
                             filename: componentFile,
@@ -170,9 +189,12 @@ function createComponentConfigs(root) {
                         module: {
                             rules: rules.getComponentWebpackRules(pluginsObj)
                         },
-                        externals: [
-                            {stimulus},
-                            {app}
+                        externals: [{
+                                stimulus
+                            },
+                            {
+                                app
+                            }
                         ],
                         plugins: plugins.getComponentWebpackPlugins(pluginsObj, {
                             root,
@@ -198,6 +220,7 @@ function createVendorConfigs(root) {
     return new Promise((resolve) => {
         const createVendorConfigs = {
             webpack: {
+                devtool: global.FTL_SOURCEMAP && 'source-map',
                 entry: {
                     'vendor': path.resolve(root, 'src/vendor.js'),
                     'polyfills': path.resolve(root, 'src/polyfills.js'),
@@ -211,8 +234,7 @@ function createVendorConfigs(root) {
                 module: {
                     rules: rules.getVendorWebpackRules(pluginsObj)
                 },
-                plugins: plugins.getVendorWebpackPlugins(pluginsObj),
-                devtool: 'false'
+                plugins: plugins.getVendorWebpackPlugins(pluginsObj)
             }
         };
         resolve([createVendorConfigs]);
@@ -224,9 +246,12 @@ function createVendorConfigs(root) {
  */
 function createAppConfigs(root) {
     return new Promise((resolve) => {
-        const {stimulus} = require('./_externals');
+        const {
+            stimulus
+        } = require('./_externals');
         const appConfig = {
             webpack: {
+                devtool: global.FTL_SOURCEMAP && 'source-map',
                 entry: {
                     'app': path.resolve(root, 'src/app.js')
                 },
@@ -240,9 +265,9 @@ function createAppConfigs(root) {
                     rules: rules.getVendorWebpackRules(pluginsObj)
                 },
                 plugins: plugins.getAppWebpackPlugins(pluginsObj),
-                externals: [
-                    {stimulus}
-                ],
+                externals: [{
+                    stimulus
+                }],
             }
         };
         resolve([appConfig]);
