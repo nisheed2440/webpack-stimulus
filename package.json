@@ -20,6 +20,7 @@
     "chalk": "^2.3.2",
     "clean-webpack-plugin": "^0.1.18",
     "cli-table": "^0.3.1",
+    "concat": "^1.0.3",
     "copy-webpack-plugin": "^4.5.0",
     "core-js": "^2.5.3",
     "css-loader": "^0.28.10",

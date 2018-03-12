@@ -49,9 +49,13 @@ async function build() {
     // Build all the webpack configs
     await Promise.all(webpackConfigs).then(() => {
         // Write partials file for the fractal build
-        return utils.writePartialsFile(global.PARTIALS_OBJ).then(() => {
+        return utils.writePartialsFile(global.PARTIALS_OBJ).then(async () => {
             // Check whether the current task is running for the first time
             global.FTL_FIRST_RUN = false;
+            // Concat component CSS files
+            await utils.concatFiles('./dist/components/**/lib/*.css', './dist/components.css');
+            // Concat component JS files
+            await utils.concatFiles('./dist/components/**/lib/*.js', './dist/components.js');
             return fractalStart();
         });
     });

@@ -8,6 +8,7 @@ const minify = require('html-minifier').minify;
 const beautify = require('js-beautify').js_beautify;
 const Table = require('cli-table');
 const del = require('del');
+const concat = require('concat');
 const rules = require('./_rules');
 const plugins = require('./_plugins');
 
@@ -128,10 +129,10 @@ function createWebpackInstance(config, options) {
             if (options && options.hasOwnProperty('component')) {
                 //  Get the partials belonging to the components and add it to the global partials object
                 await getComponentPartials(options);
-                if(!global.FTL_FIRST_RUN){
+                if (!global.FTL_FIRST_RUN) {
                     await writePartialsFile(global.PARTIALS_OBJ).then(() => {
                         // Trigger re-build fractal partials and helpers
-                        if(global.FTL_SERVER){
+                        if (global.FTL_SERVER) {
                             global.updateFractalEngine();
                             global.FTL_SERVER.emit('source:changed');
                         }
@@ -140,7 +141,7 @@ function createWebpackInstance(config, options) {
             }
             resolve(stats);
         };
-        if(global.FTL_WATCH) {
+        if (global.FTL_WATCH) {
             compiler.watch({}, compilerCb);
         } else {
             compiler.run(compilerCb);
@@ -284,8 +285,31 @@ function cleanUp(globs) {
     });
 }
 
+function concatFiles(globs, filename) {
+    return new Promise((resolve, reject) => {
+        glob(globs, (err, files) => {
+            if (err) {
+                reject(err);
+            }
+            concat(files).then((result) => {
+                resolve(result);
+            });
+        });
+    }).then(str => {
+        return new Promise((res, rej) => {
+            fs.writeFile(path.resolve(filename), str, (err) => {
+                if (err)
+                    return rej(err);
+                return res(str);
+            });
+        });
+    });
+}
+
+
 module.exports = {
     cleanUp,
+    concatFiles,
     outputComponentData,
     writePartialsFile,
     createWebpackInstance,
